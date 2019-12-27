@@ -22,7 +22,7 @@ public class SearchPane extends BorderPane {
 		setCenter(text);
 
 		button = new Button("Search");
-		button.disableProperty().bind(text.valueProperty().asString().isEmpty());
+		button.disableProperty().bind(text.textProperty().isEmpty());
 		setRight(button);
 	}
 
