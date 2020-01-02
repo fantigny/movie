@@ -1,16 +1,14 @@
 package net.anfoya.movie.search.javafx.entrypoint;
 
-import java.net.URL;
-import java.net.URLStreamHandlerFactory;
-
-import com.sun.webkit.network.CookieManager;
+import java.io.IOException;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import net.anfoya.java.net.cookie.PersistentCookieHandler;
+import net.anfoya.java.net.filtered.easylist.EasyListRuleSet;
+import net.anfoya.java.net.filtered.easylist.proxy.Proxy;
 import net.anfoya.java.net.url.filter.RuleSet;
 import net.anfoya.movie.search.javafx.ComponentBuilder;
 import net.anfoya.movie.search.javafx.SearchPane;
@@ -18,22 +16,32 @@ import net.anfoya.movie.search.javafx.SearchTabs;
 
 public class MovieSearchApp extends Application {
 
+	private static final int PORT = 666;
+
 	public static void main(final String[] args) {
+		new Thread(() -> {
+			try {
+				final RuleSet ruleSet = new EasyListRuleSet(false);
+				ruleSet.load();
+				new Proxy(PORT, ruleSet);
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		});
+
+		System.setProperty("http.proxyHost", "127.0.0.1");
+		System.setProperty("http.proxyPort", "" + PORT);
+		//		System.setProperty("https.proxyHost", "127.0.0.1");
+		//		System.setProperty("https.proxyPort", "666");
+
 		launch(args);
 	}
 
-	private final PersistentCookieHandler cookieHandler;
-	private final RuleSet ruleSet;
-
 	private final SearchTabs searchTabs;
 	private final SearchPane searchPane;
-	private final URLStreamHandlerFactory torrentHandlerFactory;
 
 	public MovieSearchApp() {
 		final ComponentBuilder compBuilder = new ComponentBuilder();
-		cookieHandler = compBuilder.buildCookieHandler();
-		ruleSet = compBuilder.buildRuleSet();
-		torrentHandlerFactory = compBuilder.buildTorrentHandlerFactory();
 		searchTabs = compBuilder.buildSearchTabs();
 		searchPane = compBuilder.buildSearchPane();
 	}
@@ -45,13 +53,6 @@ public class MovieSearchApp extends Application {
 
 	@Override
 	public void start(final Stage mainStage) {
-		cookieHandler.load();
-		CookieManager.setDefault(cookieHandler);
-
-		ruleSet.load();
-		ruleSet.setWithException(false);
-		URL.setURLStreamHandlerFactory(torrentHandlerFactory);
-
 		initGui(mainStage);
 		initData();
 	}
