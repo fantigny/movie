@@ -1,17 +1,16 @@
 package net.anfoya.movie.search.javafx.entrypoint;
 
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.net.URL;
 import java.net.URLStreamHandlerFactory;
+
+import com.sun.webkit.network.CookieManager;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-import net.anfoya.java.net.cookie.PersistentCookieStore;
+import net.anfoya.java.net.cookie.PersistentCookieHandler;
 import net.anfoya.java.net.url.filter.RuleSet;
 import net.anfoya.movie.search.javafx.ComponentBuilder;
 import net.anfoya.movie.search.javafx.SearchPane;
@@ -23,7 +22,7 @@ public class MovieSearchApp extends Application {
 		launch(args);
 	}
 
-	private final PersistentCookieStore cookieStore;
+	private final PersistentCookieHandler cookieHandler;
 	private final RuleSet ruleSet;
 
 	private final SearchTabs searchTabs;
@@ -32,7 +31,7 @@ public class MovieSearchApp extends Application {
 
 	public MovieSearchApp() {
 		final ComponentBuilder compBuilder = new ComponentBuilder();
-		cookieStore = compBuilder.buildCookieStore();
+		cookieHandler = compBuilder.buildCookieHandler();
 		ruleSet = compBuilder.buildRuleSet();
 		torrentHandlerFactory = compBuilder.buildTorrentHandlerFactory();
 		searchTabs = compBuilder.buildSearchTabs();
@@ -45,9 +44,9 @@ public class MovieSearchApp extends Application {
 	}
 
 	@Override
-    public void start(final Stage mainStage) {
-		cookieStore.load();
-		CookieHandler.setDefault(new CookieManager(cookieStore, CookiePolicy.ACCEPT_ALL));
+	public void start(final Stage mainStage) {
+		cookieHandler.load();
+		CookieManager.setDefault(cookieHandler);
 
 		ruleSet.load();
 		ruleSet.setWithException(false);
@@ -58,15 +57,15 @@ public class MovieSearchApp extends Application {
 	}
 
 	private void initGui(final Stage mainStage) {
-	    final BorderPane mainPane = new BorderPane();
-	    mainPane.setTop(searchPane);
-	    mainPane.setCenter(searchTabs);
+		final BorderPane mainPane = new BorderPane();
+		mainPane.setTop(searchPane);
+		mainPane.setCenter(searchTabs);
 
-	    searchTabs.setOnSearched(search -> {
+		searchTabs.setOnSearched(search -> {
 			searchPane.setSearched(search);
 			return null;
 		});
-	    searchPane.setOnSearchAction(resultVo -> {
+		searchPane.setOnSearchAction(resultVo -> {
 			searchTabs.search(resultVo);
 			return null;
 		});
@@ -77,7 +76,7 @@ public class MovieSearchApp extends Application {
 
 		mainStage.setTitle("Movie Search");
 		mainStage.getIcons().add(new Image(getClass().getResourceAsStream("MovieSearch.png")));
-        mainStage.setScene(scene);
+		mainStage.setScene(scene);
 		mainStage.show();
 	}
 
